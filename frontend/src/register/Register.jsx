@@ -120,22 +120,24 @@ console.log(inputData);
                         </div>
 
                         <div
-                         id='gender' className="flex gap-2">
-                        <label className="cursor-pointer label flex gap-2">
-                        <span className="label-text font-semibold text-gray-950">male</span>
+                         id='gender' className="flex gap-4 mt-2">
+                        <label className="cursor-pointer label flex gap-2 items-center">
+                        <span className="label-text font-bold text-gray-950">Male</span>
                         <input 
                         onChange={()=>selectGender('male')}
                         checked={inputData.gender === 'male'}
-                        type='checkbox' 
-                        className="checkbox checkbox-info"/>
+                        type='radio' 
+                        name='gender'
+                        className="radio radio-info border-gray-900"/>
                         </label>
-                        <label className="cursor-pointer label flex gap-2">
-                        <span className="label-text font-semibold text-gray-950">female</span>
+                        <label className="cursor-pointer label flex gap-2 items-center">
+                        <span className="label-text font-bold text-gray-950">Female</span>
                         <input 
                         checked={inputData.gender === 'female'}
                         onChange={()=>selectGender('female')}
-                        type='checkbox' 
-                        className="checkbox checkbox-info"/>
+                        type='radio' 
+                        name='gender'
+                        className="radio radio-info border-gray-900"/>
                         </label>
                         </div>
 
