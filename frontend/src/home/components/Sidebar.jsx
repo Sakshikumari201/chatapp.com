@@ -223,11 +223,11 @@ const Sidebar = ({ onSelectUser }) => {
                             )}
                         </div>
                     </div>
-                    <div className='mt-auto px-1 py-1 flex'>
-                        <button onClick={handelLogOut} className='hover:bg-red-600  w-10 cursor-pointer hover:text-white rounded-lg'>
-                            <BiLogOut size={25} />
+                    <div className='mt-auto px-1 py-2 flex'>
+                        <button onClick={handelLogOut} className='flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white px-4 py-2 cursor-pointer rounded-lg transition-colors duration-200 shadow-md w-full justify-center'>
+                            <BiLogOut size={20} />
+                            <span className='text-sm font-bold'>Logout</span>
                         </button>
-                        <p className='text-sm py-1'>Logout</p>
                     </div>
                 </>
             )}
