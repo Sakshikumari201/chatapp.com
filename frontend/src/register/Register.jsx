@@ -119,26 +119,19 @@ console.log(inputData);
                                 className='w-full input input-bordered h-10' />
                         </div>
 
-                        <div
-                         id='gender' className="flex gap-4 mt-2">
-                        <label className="cursor-pointer label flex gap-2 items-center">
-                        <span className="label-text font-bold text-gray-950">Male</span>
-                        <input 
-                        onChange={()=>selectGender('male')}
-                        checked={inputData.gender === 'male'}
-                        type='radio' 
-                        name='gender'
-                        className="radio radio-info border-gray-900"/>
-                        </label>
-                        <label className="cursor-pointer label flex gap-2 items-center">
-                        <span className="label-text font-bold text-gray-950">Female</span>
-                        <input 
-                        checked={inputData.gender === 'female'}
-                        onChange={()=>selectGender('female')}
-                        type='radio' 
-                        name='gender'
-                        className="radio radio-info border-gray-900"/>
-                        </label>
+                        <div id='gender' className="flex gap-4 mt-4 mb-2 w-full">
+                            <div 
+                                onClick={() => selectGender('male')}
+                                className={`flex-1 text-center py-2 rounded-lg cursor-pointer font-bold border-2 transition-all duration-200 ${inputData.gender === 'male' ? 'bg-sky-600 text-white border-sky-600 shadow-md' : 'bg-white/50 text-gray-900 border-gray-900 hover:bg-gray-900 hover:text-white'}`}
+                            >
+                                Male
+                            </div>
+                            <div 
+                                onClick={() => selectGender('female')}
+                                className={`flex-1 text-center py-2 rounded-lg cursor-pointer font-bold border-2 transition-all duration-200 ${inputData.gender === 'female' ? 'bg-sky-600 text-white border-sky-600 shadow-md' : 'bg-white/50 text-gray-900 border-gray-900 hover:bg-gray-900 hover:text-white'}`}
+                            >
+                                Female
+                            </div>
                         </div>
 
                         <button type='submit'
