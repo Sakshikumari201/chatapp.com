@@ -14,6 +14,9 @@ try {
                     {fullname:{$regex:'.*'+search+'.*',$options:'i'}}
                 ]
             },{
+                _id:{$ne:currentUserID}
+            }
+        ]
     }).select("-password").select("email");
 
     const usersWithUnreadCounts = await Promise.all(user.map(async (u) => {
