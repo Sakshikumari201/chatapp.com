@@ -1,13 +1,19 @@
 import Conversation from "../Models/conversationModels.js";
 import Message from "../Models/messageSchema.js";
 import { getReciverSocketId,io } from "../socket/socket.js";
+import cloudinary from "../utils/cloudinary.js";
 
 export const sendMessage =async(req,res)=>{
 try {
-    const {messages} = req.body;
+    const {messages, image} = req.body;
     const {id:reciverId} = req.params;
     const senderId = req.user._id;
 
+    let imageUrl = "";
+    if (image) {
+        const uploadResponse = await cloudinary.uploader.upload(image);
+        imageUrl = uploadResponse.secure_url;
+    }
 
     let chats = await Conversation.findOne({
         participants:{$all:[senderId , reciverId]}
@@ -22,7 +28,8 @@ try {
     const newMessages = new Message({
         senderId,
         reciverId,
-        message:messages,
+        message:messages || "",
+        imageUrl:imageUrl,
         conversationId: chats._id
     })
 
@@ -61,6 +68,25 @@ try {
 
     if(!chats)  return res.status(200).send([]);
     const message = chats.messages;
+
+    // Mark messages as read
+    const unreadMessages = message.filter(m => m.senderId.toString() === reciverId && !m.isRead);
+    if (unreadMessages.length > 0) {
+        await Message.updateMany(
+            { _id: { $in: unreadMessages.map(m => m._id) } },
+            { $set: { isRead: true } }
+        );
+        
+        // Notify the sender that their messages were read
+        const senderSocketId = getReciverSocketId(reciverId);
+        if (senderSocketId) {
+            io.to(senderSocketId).emit("messagesRead", { conversationId: chats._id, readerId: senderId });
+        }
+        
+        // Update local array so response shows them as read
+        unreadMessages.forEach(m => m.isRead = true);
+    }
+
     res.status(200).send(message)
 } catch (error) {
     res.status(500).send({

@@ -18,20 +18,21 @@ const Sidebar = ({ onSelectUser }) => {
     const [chatUser, setChatUser] = useState([]);
     const [loading, setLoading] = useState(false);
     const [selectedUserId, setSetSelectedUserId] = useState(null);
-    const [newMessageUsers, setNewMessageUsers] = useState('');
     const {messages , setMessage, selectedConversation ,  setSelectedConversation} = userConversation();
     const { onlineUser , socket} = useSocketContext();
 
-    const nowOnline = chatUser.map((user)=>(user._id));
-    //chats function
-    const isOnline = nowOnline.map(userId => onlineUser.includes(userId));
-
     useEffect(()=>{
         socket?.on("newMessage",(newMessage)=>{
-            setNewMessageUsers(newMessage)
+            // Update unread count for the sender if not currently selected
+            setChatUser(prevUsers => prevUsers.map(user => {
+                if (user._id === newMessage.senderId && selectedConversation?._id !== user._id) {
+                    return { ...user, unreadCount: (user.unreadCount || 0) + 1 };
+                }
+                return user;
+            }));
         })
         return ()=> socket?.off("newMessage");
-    },[socket,messages])
+    },[socket, selectedConversation?._id])
 
     //show user with u chatted
     useEffect(() => {
@@ -83,7 +84,14 @@ const Sidebar = ({ onSelectUser }) => {
         onSelectUser(user);
         setSelectedConversation(user);
         setSetSelectedUserId(user._id);
-        setNewMessageUsers('')
+        setNewMessageUsers('');
+        // Reset unread count locally when clicking
+        setChatUser(prevUsers => prevUsers.map(u => {
+            if (u._id === user._id) {
+                return { ...u, unreadCount: 0 };
+            }
+            return u;
+        }));
     }
 
     //back from search result
@@ -155,7 +163,7 @@ const Sidebar = ({ onSelectUser }) => {
                                                 ${selectedUserId === user?._id ? 'bg-sky-500' : ''
                                             } `}>
                                         {/*Socket is Online*/}
-                                        <div className={`avatar ${isOnline[index] ? 'online':''}`}>
+                                        <div className={`avatar ${onlineUser.includes(user._id) ? 'online':''}`}>
                                             <div className="w-12 rounded-full">
                                                 <img src={user.profilepic} alt='user.img' />
                                             </div>
@@ -163,6 +171,11 @@ const Sidebar = ({ onSelectUser }) => {
                                         <div className='flex flex-col flex-1'>
                                             <p className='font-bold text-gray-950'>{user.username}</p>
                                         </div>
+                                        {user.unreadCount > 0 && (
+                                            <div className="rounded-full bg-green-700 text-sm text-white px-2 py-0.5 min-w-[20px] text-center">
+                                                {user.unreadCount}
+                                            </div>
+                                        )}
                                     </div>
                                     <div className='divider divide-solid px-3 h-[1px]'></div>
                                 </div>
@@ -201,7 +214,7 @@ const Sidebar = ({ onSelectUser }) => {
                                                     } `}>
 
                                                 {/*Socket is Online*/}
-                                                <div className={`avatar ${isOnline[index] ? 'online':''}`}>
+                                                <div className={`avatar ${onlineUser.includes(user._id) ? 'online':''}`}>
                                                     <div className="w-12 rounded-full">
                                                         <img src={user.profilepic} alt='user.img' />
                                                     </div>
@@ -209,11 +222,11 @@ const Sidebar = ({ onSelectUser }) => {
                                                 <div className='flex flex-col flex-1'>
                                                     <p className='font-bold text-gray-950'>{user.username}</p>
                                                 </div>
-                                                    <div>
-                                                        { newMessageUsers.reciverId === authUser._id && newMessageUsers.senderId === user._id ?
-                                                    <div className="rounded-full bg-green-700 text-sm text-white px-[4px]">+1</div>:<></>
-                                                        }
+                                                {user.unreadCount > 0 && (
+                                                    <div className="rounded-full bg-green-700 text-sm text-white px-2 py-0.5 min-w-[20px] text-center">
+                                                        {user.unreadCount}
                                                     </div>
+                                                )}
                                             </div>
                                             <div className='divider divide-solid px-3 h-[1px]'></div>
                                         </div>

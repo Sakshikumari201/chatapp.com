@@ -13,13 +13,21 @@ const messageSchema = mongoose.Schema({
     },
     message:{
         type:String,
-        required:true
+        default:""
+    },
+    imageUrl:{
+        type:String,
+        default:""
     },
     conversationId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Conversation',
         default:[]
     },
+    isRead: {
+        type: Boolean,
+        default: false
+    }
 },{timestamps:true})
 
 const Message = mongoose.model("Message",messageSchema)

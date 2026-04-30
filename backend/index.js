@@ -8,7 +8,7 @@ import cookieParser from "cookie-parser";
 import { app, server } from "./socket/socket.js";
 
 dotenv.config();
-app.use(express.json());
+app.use(express.json({ limit: "50mb" }));
 app.use(cookieParser());
 
 import path from "path";

@@ -1,5 +1,6 @@
 import Conversation from "../Models/conversationModels.js";
 import User from "../Models/userModels.js";
+import Message from "../Models/messageSchema.js";
 
 export const getUserBySearch=async(req,res)=>{
 try {
@@ -13,12 +14,21 @@ try {
                     {fullname:{$regex:'.*'+search+'.*',$options:'i'}}
                 ]
             },{
-                _id:{$ne:currentUserID}
-            }
-        ]
-    }).select("-password").select("email")
+    }).select("-password").select("email");
 
-    res.status(200).send(user)
+    const usersWithUnreadCounts = await Promise.all(user.map(async (u) => {
+        const unreadCount = await Message.countDocuments({
+            senderId: u._id,
+            reciverId: currentUserID,
+            isRead: false
+        });
+        return {
+            ...u._doc,
+            unreadCount
+        };
+    }));
+
+    res.status(200).send(usersWithUnreadCounts)
 
 } catch (error) {
     res.status(500).send({
@@ -52,7 +62,22 @@ export const getCorrentChatters=async(req,res)=>{
 
             const users = otherParticipentsIDS.map(id => usersArray.find(u => u._id.toString() === id.toString()));
 
-            res.status(200).send(users)
+            const usersWithUnreadCounts = await Promise.all(users.map(async (user) => {
+                if(!user) return null;
+                const unreadCount = await Message.countDocuments({
+                    senderId: user._id,
+                    reciverId: currentUserID,
+                    isRead: false
+                });
+                return {
+                    ...user._doc,
+                    unreadCount
+                };
+            }));
+
+            const validUsers = usersWithUnreadCounts.filter(u => u !== null);
+
+            res.status(200).send(validUsers)
 
     } catch (error) {
         res.status(500).send({

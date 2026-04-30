@@ -3,6 +3,7 @@ import userConversation from '../../Zustans/useConversation';
 import { useAuth } from '../../context/AuthContext';
 import { TiMessages } from "react-icons/ti";
 import { IoArrowBackSharp, IoSend } from 'react-icons/io5';
+import { FaImage } from 'react-icons/fa';
 import axios from 'axios';
 import { useSocketContext } from '../../context/SocketContext';
 import notify from '../../assets/sound/notification.mp3';
@@ -14,7 +15,11 @@ const MessageContainer = ({ onBackUser }) => {
     const [loading, setLoading] = useState(false);
     const [sending , setSending] = useState(false);
     const [sendData , setSnedData] = useState("")
+    const [selectedImage, setSelectedImage] = useState(null);
+    const [isTyping, setIsTyping] = useState(false);
+    const typingTimeoutRef = useRef(null);
     const lastMessageRef = useRef();
+    const fileInputRef = useRef(null);
 
     useEffect(()=>{
       socket?.on("newMessage",(newMessage)=>{
@@ -23,8 +28,33 @@ const MessageContainer = ({ onBackUser }) => {
         setMessage([...messages,newMessage])
       })
 
-      return ()=> socket?.off("newMessage");
-    },[socket,setMessage,messages])
+      socket?.on("userTyping", (data) => {
+          if (selectedConversation?._id === data.userId) {
+              setIsTyping(true);
+          }
+      });
+
+      socket?.on("userStoppedTyping", (data) => {
+          if (selectedConversation?._id === data.userId) {
+              setIsTyping(false);
+          }
+      });
+
+      socket?.on("messagesRead", (data) => {
+          if (selectedConversation?._id === data.readerId) {
+              setMessage(prevMessages => 
+                  prevMessages.map(m => ({ ...m, isRead: true }))
+              );
+          }
+      });
+
+      return ()=> {
+          socket?.off("newMessage");
+          socket?.off("userTyping");
+          socket?.off("userStoppedTyping");
+          socket?.off("messagesRead");
+      }
+    },[socket,setMessage,messages, selectedConversation?._id])
 
     useEffect(()=>{
         setTimeout(()=>{
@@ -57,13 +87,40 @@ const MessageContainer = ({ onBackUser }) => {
 
     const handelMessages=(e)=>{
         setSnedData(e.target.value)
+        if (socket && selectedConversation) {
+            socket.emit("typing", selectedConversation._id);
+
+            if (typingTimeoutRef.current) {
+                clearTimeout(typingTimeoutRef.current);
+            }
+
+            typingTimeoutRef.current = setTimeout(() => {
+                socket.emit("stopTyping", selectedConversation._id);
+            }, 2000);
+        }
       }
+
+    const handleImageChange = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onloadend = () => {
+                setSelectedImage(reader.result);
+            };
+        }
+    };
 
     const handelSubmit=async(e)=>{
         e.preventDefault();
+        if (!sendData.trim() && !selectedImage) return;
+
         setSending(true);
         try {
-            const res =await axios.post(`/api/message/send/${selectedConversation?._id}`,{messages:sendData});
+            const res =await axios.post(`/api/message/send/${selectedConversation?._id}`,{
+                messages:sendData,
+                image: selectedImage
+            });
             const data = await res.data;
             if (data.success === false) {
                 setSending(false);
@@ -71,6 +128,7 @@ const MessageContainer = ({ onBackUser }) => {
             }
             setSending(false);
             setSnedData('')
+            setSelectedImage(null)
             setMessage([...messages,data])
         } catch (error) {
             setSending(false);
@@ -128,21 +186,45 @@ const MessageContainer = ({ onBackUser }) => {
                     <div className={`chat-bubble ${message.senderId === authUser._id ? 'bg-sky-600' : ''
 
                     }`}>
+                      {message.imageUrl && (
+                          <img src={message.imageUrl} alt="attachment" className="w-48 h-auto rounded-lg mb-2 cursor-pointer" onClick={() => window.open(message.imageUrl, '_blank')} />
+                      )}
                       {message?.message}
                     </div>
-                    <div className="chat-footer text-[10px] opacity-80">
+                    <div className="chat-footer text-[10px] opacity-80 flex gap-1 items-center">
                       {new Date(message?.createdAt).toLocaleDateString('en-IN')}
                       {new Date(message?.createdAt).toLocaleTimeString('en-IN', { hour: 'numeric', minute:
                          'numeric' })}
+                      {message.senderId === authUser._id && (
+                          <span className={message.isRead ? "text-blue-500 font-bold" : "text-gray-400 font-bold"}>
+                              {message.isRead ? "✓✓" : "✓"}
+                          </span>
+                      )}
                     </div>
                   </div>
                 </div>
               ))}
+              {isTyping && (
+                  <div className='chat chat-start'>
+                      <div className='chat-image avatar'></div>
+                      <div className='chat-bubble bg-gray-500 opacity-70 text-sm'>
+                          typing...
+                      </div>
+                  </div>
+              )}
             </div>
             <form onSubmit={handelSubmit} className='rounded-full text-black'>
-            <div className='w-full rounded-full flex items-center bg-white'>
-              <input value={sendData} onChange={handelMessages} required id='message' type='text' 
-              className='w-full bg-transparent outline-none px-4 rounded-full'/>
+            {selectedImage && (
+                <div className="relative mb-2 w-24">
+                    <img src={selectedImage} alt="preview" className="w-24 h-24 object-cover rounded-lg" />
+                    <button type="button" onClick={() => setSelectedImage(null)} className="absolute top-0 right-0 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs translate-x-1/2 -translate-y-1/2">✕</button>
+                </div>
+            )}
+            <div className='w-full rounded-full flex items-center bg-white pr-1'>
+              <FaImage size={24} className="text-gray-500 ml-4 cursor-pointer hover:text-sky-600" onClick={() => fileInputRef.current?.click()} />
+              <input type="file" hidden ref={fileInputRef} onChange={handleImageChange} accept="image/*" />
+              <input value={sendData} onChange={handelMessages} id='message' type='text' placeholder='Type a message'
+              className='w-full bg-transparent outline-none px-4 py-3 rounded-full'/>
               <button type='submit'>
                 {sending ? <div className='loading loading-spinner'></div>:
                 <IoSend size={25}
