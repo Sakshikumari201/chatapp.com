@@ -16,25 +16,16 @@ const Home = () => {
     setSelectedUser(null);
   }
   return (
-
-    <div className='flex justify-between min-w-full
-     md:min-w-[550px] md:max-w-[65%]
-      px-2 h-[95%] md:h-full  
-      rounded-xl shadow-lg
-       bg-gray-400 bg-clip-padding
-        backdrop-filter backdrop-blur-lg 
-        bg-opacity-0'
-        >
-      <div className={`w-full py-2 md:flex ${isSidebarVisible ? '' : 'hidden'}`}>
-      <Sidebar onSelectUser={handelUserSelect}/>
+    <div className='flex justify-between w-full h-screen bg-[#FFFDF7]'>
+      <div className={`w-full h-full md:w-1/3 border-r border-[#F0ECE4] ${isSidebarVisible ? 'block' : 'hidden md:block'}`}>
+        <Sidebar onSelectUser={handelUserSelect} />
       </div>
-      <div className={`divider divider-horizontal px-3 md:flex
-         ${isSidebarVisible ? '' : 'hidden'} ${selectedUser ? 'block' : 'hidden'}`}></div>
-      <div className={`flex-auto ${selectedUser ? '' : 'hidden md:flex'} bg-gray-200}`}>
-      <MessageContainer onBackUser={handelShowSidebar}/>
+      <div className={`flex-1 h-full ${!isSidebarVisible ? 'block' : 'hidden md:block'}`}>
+        <MessageContainer onBackUser={handelShowSidebar} />
       </div>
     </div>
   );
+
 };
 
 export default Home;

@@ -1,6 +1,7 @@
 import Conversation from "../Models/conversationModels.js";
 import User from "../Models/userModels.js";
 import Message from "../Models/messageSchema.js";
+import cloudinary from "../utils/cloudinary.js";
 
 export const getUserBySearch=async(req,res)=>{
 try {
@@ -90,3 +91,111 @@ export const getCorrentChatters=async(req,res)=>{
         console.log(error);
     }
 }
+
+export const saveFcmToken = async (req, res) => {
+    try {
+        const { fcmToken } = req.body;
+        const userId = req.user._id;
+
+        await User.findByIdAndUpdate(userId, { fcmToken });
+
+        res.status(200).send({
+            success: true,
+            message: "Token saved successfully"
+        });
+    } catch (error) {
+        res.status(500).send({
+            success: false,
+            message: error.message
+        });
+        console.log(error);
+    }
+}
+
+export const getUserProfile = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const user = await User.findById(id).select("-password");
+        if (!user) return res.status(404).send({ success: false, message: "User not found" });
+
+        res.status(200).send(user);
+    } catch (error) {
+        res.status(500).send({
+            success: false,
+            message: error.message
+        });
+        console.log(error);
+    }
+}
+
+export const updateProfilePic = async (req, res) => {
+    try {
+        const { profilepic } = req.body;
+        const userId = req.user._id;
+
+        if (!profilepic) {
+            return res.status(400).send({ success: false, message: "Profile picture is required" });
+        }
+
+        const uploadResponse = await cloudinary.uploader.upload(profilepic);
+        const imageUrl = uploadResponse.secure_url;
+
+        const updatedUser = await User.findByIdAndUpdate(
+            userId,
+            { profilepic: imageUrl },
+            { new: true }
+        ).select("-password");
+
+        res.status(200).send({
+            success: true,
+            message: "Profile picture updated successfully",
+            user: updatedUser
+        });
+    } catch (error) {
+        res.status(500).send({
+            success: false,
+            message: error.message
+        });
+        console.log(error);
+    }
+}
+
+export const updateUserProfile = async (req, res) => {
+    try {
+        const { fullname, username, bio } = req.body;
+        const userId = req.user._id;
+
+        const user = await User.findById(userId);
+        if (!user) return res.status(404).send({ success: false, message: "User not found" });
+
+        // If username is changing, check if new username is already taken
+        if (username && username !== user.username) {
+            const existingUser = await User.findOne({ username });
+            if (existingUser) {
+                return res.status(400).send({ success: false, message: "Username already exists" });
+            }
+        }
+
+        user.fullname = fullname || user.fullname;
+        user.username = username || user.username;
+        user.bio = bio || user.bio;
+
+        await user.save();
+
+        res.status(200).send({
+            success: true,
+            message: "Profile updated successfully",
+            user: {
+                _id: user._id,
+                fullname: user.fullname,
+                username: user.username,
+                bio: user.bio,
+                profilepic: user.profilepic,
+                email: user.email
+            }
+        });
+    } catch (error) {
+        res.status(500).send({ success: false, message: error.message });
+    }
+}
+

@@ -15,9 +15,12 @@ import path from "path";
 
 const __dirname = path.resolve();
 
+import adminRouter from './Route/adminRoute.js'
+
 app.use('/api/auth',authRouter)
 app.use('/api/message',messageRouter)
 app.use('/api/user',userRouter)
+app.use('/api/admin',adminRouter)
 
 app.use(express.static(path.join(__dirname, "/frontend/dist")));
 

@@ -1,12 +1,34 @@
+@import url('https://fonts.googleapis.com/css2?family=Quicksand:wght@300;400;500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-body{
-  background: linear-gradient(rgba(0,0,0,0.2),rgba(0,0,0,0.2)),url('../public/backg.jpg');
-  background-repeat: no-repeat;
-  background-size: cover;
-  background-position: center;
-  background-attachment: fixed;
+body {
+  font-family: 'Quicksand', sans-serif;
+  -webkit-tap-highlight-color: transparent;
+  background-color: #FFFDF7;
+  color: #4A443D;
+  margin: 0;
+  padding: 0;
+  height: 100vh;
+  overflow: hidden;
 }
+
+.pastel-shadow {
+  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.05);
+}
+
+.avatar-whatsapp {
+  @apply rounded-full border-2 border-white shadow-sm object-cover aspect-square;
+}
+
+.custom-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+.custom-scroll {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+

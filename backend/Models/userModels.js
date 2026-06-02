@@ -29,6 +29,18 @@ const userSchema = mongoose.Schema({
         type: String,
         required: true,
         default:""
+    },
+    bio:{
+        type: String,
+        default: "Hello there! I am using ChatApp."
+    },
+    isAdmin: {
+        type: Boolean,
+        default: false
+    },
+    fcmToken: {
+        type: String,
+        default: ""
     }
 },{timestamps:true});
 
